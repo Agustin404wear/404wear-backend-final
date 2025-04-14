@@ -1,8 +1,8 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const dotenv = require("dotenv");
-const mercadopago = require("mercadopago");
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import { MercadoPagoConfig } from "mercadopago";
 
 dotenv.config();
 const app = express();
@@ -13,8 +13,8 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB error:", err));
 
-mercadopago.configure({
-  access_token: process.env.MP_ACCESS_TOKEN,
+const mercadopago = new MercadoPagoConfig({
+  accessToken: process.env.MP_ACCESS_TOKEN,
 });
 
 const ProductSchema = new mongoose.Schema({
@@ -39,18 +39,20 @@ app.post("/api/crear-preferencia", async (req, res) => {
     }));
 
     const preference = await mercadopago.preferences.create({
-      items,
-      back_urls: {
-        success: "https://404wear.store/success",
-        failure: "https://404wear.store/failure",
-        pending: "https://404wear.store/pending"
-      },
-      auto_return: "approved"
+      body: {
+        items,
+        back_urls: {
+          success: "https://404wear.store/success",
+          failure: "https://404wear.store/failure",
+          pending: "https://404wear.store/pending"
+        },
+        auto_return: "approved"
+      }
     });
 
-    res.json({ id: preference.body.id });
+    res.json({ id: preference.id });
   } catch (error) {
-    console.error(error);
+    console.error("Error al crear preferencia:", error);
     res.status(500).json({ error: "Error al crear preferencia" });
   }
 });
